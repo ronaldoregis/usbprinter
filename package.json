@@ -1,0 +1,16 @@
+{
+    "name": "USBPrinter",
+    "version": "1.0.0",
+    "description": "USBPrinter plugin",
+    "cordova": {
+        "id": "cordova-plugin-usbprinter",
+        "platforms": [
+            "android"
+        ]
+    },
+    "keywords": [
+        "ecosystem:cordova"
+    ],
+    "author": "Ronaldo Regis",
+    "license": "Apache 2.0"
+}
