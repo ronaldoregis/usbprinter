@@ -67,9 +67,9 @@ public class USBPrinter extends CordovaPlugin {
             byte[] data;
             
 //            data = new byte[]{0x0A, 0x0A};
-            data = Command.getPrintDemo();
+//            data = Command.getPrintDemo();
 
-//            data = Command.transToPrintText(message);
+            data = Command.transToPrintText(message);
             
             if(epOut != null) {
                 if (myDeviceConnection.bulkTransfer(epOut, data, data.length, 0) < 0) {
