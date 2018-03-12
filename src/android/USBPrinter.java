@@ -51,28 +51,45 @@ public class USBPrinter extends CordovaPlugin {
 
     @Override
     public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
-        if (action.equals("print")) {
+        if (action.equals("printBody")) {
             String message = args.getString(0);
-            this.print(message, callbackContext);
+            this.print(message, false, callbackContext);
+            return true;
+        } else if (action.equals("printHead")) {
+            String message = args.getString(0);
+            this.print(message, true, callbackContext);
             return true;
         }
         return false;
     }
 
-    private void print(String message, CallbackContext callbackContext) {
+    private void print(String message,boolean isHeading, CallbackContext callbackContext) {
         if (message != null && message.length() > 0) {
 
             gpioOutputControl(filePrinterPower,"1");//power on
             openUSBPrinter();
-            byte[] data;
-            
-//            data = new byte[]{0x0A, 0x0A};
-//            data = Command.getPrintDemo();
 
-            data = Command.transToPrintText(message);
+            int iNum = 0;
+            byte[] oldText;
+            byte[] printText = new byte[1024];
+            String strTmp = "";
+            
+            if (isHeading) {
+                oldText = Command.setWH('2');
+                System.arraycopy(oldText, 0, printText, iNum, oldText.length);
+                iNum += oldText.length;
+
+                oldText = Command.setBold(true);
+                System.arraycopy(oldText, 0, printText, iNum, oldText.length);
+                iNum += oldText.length;
+            }
+
+            oldText = message.getBytes();
+            System.arraycopy(oldText, 0, printText, iNum, oldText.length);
+            iNum += oldText.length;
             
             if(epOut != null) {
-                if (myDeviceConnection.bulkTransfer(epOut, data, data.length, 0) < 0) {
+                if (myDeviceConnection.bulkTransfer(epOut, printText, printText.length, 0) < 0) {
                     Log.d(this.tag, "BulkOut send error！\n");
                 }else {
                     Log.d(this.tag, "Data send OK！\n");
