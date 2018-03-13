@@ -49,49 +49,34 @@ public class USBPrinter extends CordovaPlugin {
     
     private String tag = "Cordova";
 
+    private byte[] buffer = new byte[1024];
+    private int iNum = 0;
+
     @Override
     public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
-        if (action.equals("printBody")) {
-            String message = args.getString(0);
-            this.print(message, false, callbackContext);
+        if (action.equals("print")) {
+            this.print(callbackContext);
             return true;
-        } else if (action.equals("printHead")) {
+        } else if (action.equals("sendText")) {
             String message = args.getString(0);
-            this.print(message, true, callbackContext);
+            this.sendText(message, callbackContext);
             return true;
         }
         return false;
     }
 
-    private void print(String message,boolean isHeading, CallbackContext callbackContext) {
-        if (message != null && message.length() > 0) {
+    private void print(CallbackContext callbackContext) {
+        if (this.buffer.length > 0) {
 
             gpioOutputControl(filePrinterPower,"1");//power on
             openUSBPrinter();
-
-            int iNum = 0;
-            byte[] oldText;
-            byte[] printText = new byte[1024];
-            String strTmp = "";
-            
-            if (isHeading) {
-                oldText = Command.setWH('2');
-                System.arraycopy(oldText, 0, printText, iNum, oldText.length);
-                iNum += oldText.length;
-
-                oldText = Command.setBold(true);
-                System.arraycopy(oldText, 0, printText, iNum, oldText.length);
-                iNum += oldText.length;
-            }
-
-            oldText = message.getBytes();
-            System.arraycopy(oldText, 0, printText, iNum, oldText.length);
-            iNum += oldText.length;
             
             if(epOut != null) {
-                if (myDeviceConnection.bulkTransfer(epOut, printText, printText.length, 0) < 0) {
+                if (myDeviceConnection.bulkTransfer(epOut, this.buffer, buffer.length, 0) < 0) {
                     Log.d(this.tag, "BulkOut send error！\n");
                 }else {
+                    this.buffer = new byte[1024];
+                    this.iNum = 0;
                     Log.d(this.tag, "Data send OK！\n");
                 }
             }else {
@@ -99,6 +84,14 @@ public class USBPrinter extends CordovaPlugin {
             }
         } else {
             callbackContext.error("Expected one non-empty string argument.");
+        }
+    }
+    
+    private void sendText(String message, CallbackContext callbackContext) {
+        if (message != null && message.length() > 0) {
+            byte[] messageBytes = message.getBytes();
+            System.arraycopy(messageBytes, 0, this.buffer, this.iNum, messageBytes.length);
+		    this.iNum += messageBytes.length;
         }
     }
     
